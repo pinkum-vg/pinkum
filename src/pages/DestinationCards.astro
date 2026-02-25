@@ -1,0 +1,256 @@
+---
+// DestinationCards.astro
+// Usage: import and use <DestinationCards /> in your Astro pages
+
+export interface Destination {
+  image: string;
+  name: string;
+  description: string;
+}
+
+interface Props {
+  title?: string;
+  destinations?: Destination[];
+}
+
+const {
+  title = "Najbolje na destinaciji",
+  destinations = [
+    {
+      image: "public/images/tumane.webp",
+      name: "Manastir Tumane",
+      description: "Manastir Tumane je srpski pravoslavni manastir iz 14. veka, koji pripada branicevskoj eparhiji. Nalazi se na devet kilometara udaljenosti od Golupca, u podnožju golubačkih planina, okružen šumom, na levoj obali Tumanske reke. Prema narodnom predanju, tumanski manastir je zadužbina Miloša Obilića.",
+    },
+    {
+      image: "public/images/gtvrdjava.webp",
+      name: "Golubačka tvrđava",
+      description: "Golubački grad ili tvrđava Golubac je srednjovekovna tvrđava, spomenik kulture od izuzetnog značaja. Nalazi se u Nacionalnom parku Đerdap, na desnoj obali Dunava, 4 km nizvodno od današnjeg naselja. Smeštena je na visokim liticama, na mestu na kom se reka sužava, na samom ulazu u Đerdapsku klisuru.",
+    },
+    {
+      image: "public/images/ram.webp",
+      name: "Ramska tvrđava",
+      description: "Slikovita srednjovekovna Ramska tvrđava sagrađena je 1483. godine po nalogu sultana Bajazita II – dede Sulejmana Veličanstvenog. Iz ovog perioda potiče legenda, po kojoj je sultan Bajazit II, obilazeći svoje vojnike, zastao da se odmori na brežuljku sa koga se pružao lep pogled na Dunav i suprotnu ugarsku stranu.",
+    },
+    {
+      image: "public/images/jezero.webp",
+      name: "Srebrno jezero",
+      description: "Srebrno jezero je veštačko jezero na desnoj obali Dunava i predstavlja njen nekadašnji rečni rukavac koji je danas zatvoren dvema branama. Nalazi se na području Braničevskog okruga u istočnoj Srbiji, na dva kilometra od Velikog Gradišta. Prosečne je širine od 300 m, a prosečne dužine od 14 km.",
+    },
+    {
+      image: "public/images/djerdap.jpg",
+      name: "Nacionalni park Djerdap",
+      description: "Nacionalni park Đerdap je najveći nacionalni park u Srbiji. Prateći tok Dunava, prostire se u dužini od 100 kilometara njegove desne obale, od Golupca do Karataša kod Kladova, gde se prostiru zone sa različitim režimom zaštite objekata prirode, spomenika kulture, faune i vegetacije reliktnih vrsta.",
+    },
+    
+  ],
+} = Astro.props;
+---
+
+<section class="destinations">
+  <h2 class="destinations__title">{title}</h2>
+
+  <div class="destinations__track-wrap">
+    <button class="destinations__arrow destinations__arrow--prev" aria-label="Prethodni">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="15 18 9 12 15 6"/>
+      </svg>
+    </button>
+
+    <div class="destinations__track" id="dest-track">
+      {destinations.map((dest) => (
+        <article class="dest-card">
+          <div class="dest-card__img-wrap">
+            <img
+              src={dest.image}
+              alt={dest.name}
+              class="dest-card__img"
+              loading="lazy"
+              width="280"
+              height="200"
+            />
+          </div>
+          <div class="dest-card__body">
+            <h3 class="dest-card__name">{dest.name}</h3>
+            <p class="dest-card__desc">{dest.description}</p>
+          </div>
+        </article>
+      ))}
+    </div>
+
+    <button class="destinations__arrow destinations__arrow--next" aria-label="Sledeći">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="9 18 15 12 9 6"/>
+      </svg>
+    </button>
+  </div>
+</section>
+
+<style>
+  /* ── Fonts ── */
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=DM+Sans:wght@400;500&display=swap');
+
+  .destinations {
+    font-family: 'DM Sans', sans-serif;
+    padding: 2.5rem 1.25rem;
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+
+  .destinations__title {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(1.4rem, 3vw, 2rem);
+    color: #caa378;
+    margin: 0 0 1.5rem;
+    letter-spacing: -0.02em;
+  }
+
+  /* ── Track wrapper holds arrows + scrollable track ── */
+  .destinations__track-wrap {
+    position: relative;
+  }
+
+  /* ── Scrollable row ── */
+  .destinations__track {
+    display: flex;
+    gap: 1.25rem;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;          /* Firefox */
+    padding-bottom: 4px;            /* prevent clipping of card shadow */
+    scroll-behavior: smooth;
+  }
+
+  .destinations__track::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* ── Arrow buttons ── */
+  .destinations__arrow {
+    display: none; /* hidden on mobile; shown on desktop */
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    border: 1.5px solid #dde1e9;
+    background: #fff;
+    color: #1a1a2e;
+    cursor: pointer;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    transition: background 0.18s, box-shadow 0.18s;
+    z-index: 2;
+  }
+
+  .destinations__arrow--prev { left: -18px; }
+  .destinations__arrow--next { right: -18px; }
+
+  .destinations__arrow:hover {
+    background: #1a1a2e;
+    color: #fff;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.16);
+  }
+
+  /* ── Individual card ── */
+  .dest-card {
+    scroll-snap-align: start;
+    flex: 0 0 clamp(220px, 72vw, 280px);   /* wide on mobile, fixed on desktop */
+    border-radius: 14px;
+    overflow: hidden;
+    background: #F2F2F2;
+    box-shadow: 0 2px 12px rgba(26, 26, 46, 0.08);
+    transition: transform 0.22s ease, box-shadow 0.22s ease;
+    cursor: pointer;
+  }
+
+  .dest-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 28px rgba(26, 26, 46, 0.15);
+  }
+
+  .dest-card__img-wrap {
+    width: 100%;
+    aspect-ratio: 4/3;
+    overflow: hidden;
+    background: #eef0f5;
+  }
+
+  .dest-card__img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: transform 0.4s ease;
+  }
+
+  .dest-card:hover .dest-card__img {
+    transform: scale(1.06);
+  }
+
+  .dest-card__body {
+    padding: 1rem 1.1rem 1.2rem;
+  }
+
+  .dest-card__name {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.05rem;
+    color: #1a1a2e;
+    margin: 0 0 0.3rem;
+    
+  }
+
+  .dest-card__desc {
+    font-size: 0.85rem;
+    color: #6b7385;
+    margin: 0;
+    line-height: 1.45;
+  }
+
+  /* ── Desktop: fixed-width cards, show arrows ── */
+  @media (min-width: 768px) {
+    .destinations__arrow {
+      display: flex;
+      /* recalculate transform since it was overridden above */
+      transform: translateY(-80%);
+      
+      
+    }
+
+    .destinations__arrow:hover {
+      transform: translateY(-80%) scale(1.05);
+    }
+
+    .dest-card {
+      flex: 0 0 260px;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .dest-card {
+      flex: 0 0 280px;
+    }
+  }
+</style>
+
+<script>
+  const track = document.getElementById('dest-track') as HTMLElement;
+  const prevBtn = document.querySelector('.destinations__arrow--prev') as HTMLButtonElement;
+  const nextBtn = document.querySelector('.destinations__arrow--next') as HTMLButtonElement;
+
+  const scrollAmount = () => {
+    // scroll by roughly one card width + gap
+    const card = track.querySelector('.dest-card') as HTMLElement;
+    return card ? card.offsetWidth + 20 : 300;
+  };
+
+  prevBtn?.addEventListener('click', () => {
+    track.scrollBy({ left: -scrollAmount(), behavior: 'smooth' });
+  });
+
+  nextBtn?.addEventListener('click', () => {
+    track.scrollBy({ left: scrollAmount(), behavior: 'smooth' });
+  });
+</script>

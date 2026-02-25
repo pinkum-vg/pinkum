@@ -1,0 +1,2490 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import MapLocation from './MapLocation.astro';
+import DestinationCards from './DestinationCards.astro';
+
+// MapLocation.astro
+// Usage: <MapLocation lat={44.7469} lng={21.0731} label="Karađorđeva 34A 3, Veliko Gradište" zoom={15} />
+
+interface Props {
+  lat: number;
+  lng: number;
+  label?: string;
+  zoom?: number;
+}
+
+const { lat, lng, label = "View on map", zoom = 15 } = Astro.props;
+
+// Google Maps static image (no API key needed for basic use)
+// Uses OpenStreetMap static tiles as a free alternative
+const mapsUrl = `https://www.google.com/maps?q=${lat},${lng}&z=${zoom}`;
+const staticMapUrl = `https://maps.googleapis.com/maps/api/staticmap?center=${lat},${lng}&zoom=${zoom}&size=400x200&markers=color:red%7C${lat},${lng}&scale=2`;
+
+// Free alternative using OpenStreetMap (no API key required)
+const osmStaticUrl = `https://staticmap.openstreetmap.de/staticmap.php?center=${lat},${lng}&zoom=${zoom}&size=400x200&markers=${lat},${lng},red-pushpin`;
+
+const amenities = [
+  { icon: 'home', label: 'apartmani', fullWidth: true, desktop: true, mobile: true },
+  { icon: 'parking', label: 'besplatan parking', fullWidth: true, desktop: true, mobile: true },
+  { icon: 'wifi', label: 'besplatan WiFi', fullWidth: false, desktop: true, mobile: true },
+  { icon: 'family', label: 'porodične sobe', fullWidth: false, desktop: true, mobile: true },
+  // Add desktop-only amenities
+  { icon: 'terrace', label: 'terasa', fullWidth: false, desktop: true, mobile: false },
+  { icon: 'bath', label: 'sopstveno kupatilo', fullWidth: false, desktop: true, mobile: false },
+  { icon: 'view', label: 'pogled', fullWidth: false, desktop: true, mobile: false },
+  { icon: 'kitchen', label: 'kuhinja', fullWidth: false, desktop: true, mobile: false },
+];
+
+const apartment = {
+  title: "Apartman sa 1 Spavaćom Sobom",
+  guests: 3,
+  bedroom: {
+    count: 3,
+    beds: "kreveta za 1 osobu"
+  },
+  livingRoom: {
+    count: 1,
+    furniture: "kauč na razvlačenje"
+  },
+  amenities: [
+    { icon: 'apartment', label: '1 ceo apartman' },
+    { icon: 'size', label: '35 m²' },
+    { icon: 'balcony', label: 'balkon' },
+    { icon: 'view', label: 'pogled na unutrašnje dvorište' },
+    { icon: 'floor', label: 'popločano dvorište' },
+    { icon: 'bath', label: 'sopstveno kupatilo' },
+    { icon: 'entrance', label: 'sopstveni ulaz' },
+    { icon: 'fridge', label: 'frižider' },
+    { icon: 'cooking', label: 'ploča za kuvanje' },
+    { icon: 'wifi', label: 'Besplatan bežični internet' }
+  ]
+};
+
+const apartment2 = {
+  title: "Apartman sa 1 Spavaćom Sobom",
+  guests: 2,
+  bedroom: {
+    count: 2,
+    beds: "kreveta za 1 osobu"
+  },
+  
+  amenities: [
+    { icon: 'apartment', label: '1 ceo apartman' },
+    { icon: 'size', label: '35 m²' },
+    { icon: 'balcony', label: 'balkon' },
+    { icon: 'view', label: 'pogled na unutrašnje dvorište' },
+    { icon: 'floor', label: 'popločano dvorište' },
+    { icon: 'bath', label: 'sopstveno kupatilo' },
+    { icon: 'entrance', label: 'sopstveni ulaz' },
+    { icon: 'fridge', label: 'frižider' },
+    { icon: 'cooking', label: 'ploča za kuvanje' },
+    { icon: 'wifi', label: 'Besplatan bežični internet' }
+  ]
+};
+
+const reviews = [
+  {
+    name: "Anke",
+    country: "Nemačka",
+    flag: "public/images/de.png",
+    text: "Veoma prijateljski domacini. Dunav je udaljen samo 100 m. Istražili smo okolinu biciklom. Savršena lokacija za odmor!",
+    rating: 10,
+  },
+  {
+    name: "Luca",
+    country: "Italija",
+    flag: "public/images/it.png",
+    text: "Čisto i jednostavno mesto, uslužan domaćin. Sve OK! Toplo preporučujem svima koji traže mir i tišinu.",
+    rating: 10,
+  },
+  {
+    name: "Miloš",
+    country: "Srbija",
+    flag: "public/images/rs.png",
+    text: "Apartman je nov i veoma čist. Svaka čast za domaćine. Parking odmah ispred, sve na svom mestu.",
+    rating: 9,
+  },
+  {
+    name: "Milena",
+    country: "Srbija",
+    flag: "public/images/rs.png",
+    text: "Nov, svež, svetao i čist stan. Odlično povezano, sa prodavnicom odmah iza ugla i kratkom šetnjom do restaurana.",
+    rating: 10,
+  },
+  {
+    name: "Marko",
+    country: "Bosna",
+    flag: "public/images/ba.png",
+    text: "Lokacija je odlična, kraj miran. U blizini je sve što treba — prodavnice, kafići, park. Preporučujem!",
+    rating: 9,
+  },
+  {
+    name: "Elena",
+    country: "Srbija",
+    flag: "public/images/rs.png",
+    text: "Prelepo mesto za odmor. Domaćin je bio na raspolaganju u svakom trenutku. Definitivno se vraćamo!",
+    rating: 10,
+  },
+  {
+    name: "Thomas",
+    country: "Srbija",
+    flag: "public/images/rs.png",
+    text: "Savršena čistoća, moderan nameštaj i tiha ulica. Dunav nadohvat ruke. Fantastičan boravak!",
+    rating: 10,
+  },
+];
+
+const overallScore = 9.9;
+const totalReviews = 39;
+
+const categories = [
+  { label: "Lokacija", score: 10.0 },
+  { label: "Čistoća", score: 9.8 },
+  { label: "Odnos cene i kvaliteta", score: 9.9 },
+  { label: "Sadržaji", score: 9.3 },
+  { label: "Udobnost", score: 9.8 },
+  { label: "Osoblje", score: 9.9 },
+];
+
+const currentYear = new Date().getFullYear();
+
+---
+<BaseLayout
+  title="Apartments for Rent – Cozy & Comfortable"
+  description="Beautiful wood-style apartments for short and long-term stays. View gallery and contact us."
+>
+
+<!-- Navigation -->
+<nav class="navbar">
+  <div class="container nav-container">
+    <div class="logo">🏡 Pinkum</div>
+    <ul class="nav-links">
+      <li><a href="#gallery">Galerija</a></li>
+      <li><a href="#about">O nama</a></li>
+      <li><a href="#contact">Kontakt</a></li>
+    </ul>
+  </div>
+</nav>
+
+<!-- Compact Hero Section -->
+<header class="hero-compact">
+  <div class="hero-content-compact">
+    <h1>Apartmani Pinkum Veliko Gradište</h1>
+  </div>
+</header>
+    
+    
+   
+
+<!-- Main Gallery Section -->
+
+<section class="amenities-section">
+  <div class="amenities-container">
+    <div class="amenities-grid">
+      {amenities.map((amenity) => (
+        <div class={`amenity-card ${amenity.fullWidth ? 'full-width' : ''} ${amenity.mobile ? 'show-mobile' : 'hide-mobile'}`}>
+          <div class="amenity-icon">
+            {amenity.icon === 'home' && (
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                <polyline points="9 22 9 12 15 12 15 22"/>
+              </svg>
+            )}
+            {amenity.icon === 'parking' && (
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"/>
+                <path d="M9 17V7h4a3 3 0 0 1 0 6H9"/>
+              </svg>
+            )}
+            {amenity.icon === 'wifi' && (
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M5 12.55a11 11 0 0 1 14.08 0"/>
+                <path d="M1.42 9a16 16 0 0 1 21.16 0"/>
+                <path d="M8.53 16.11a6 6 0 0 1 6.95 0"/>
+                <line x1="12" y1="20" x2="12.01" y2="20"/>
+              </svg>
+            )}
+            {amenity.icon === 'family' && (
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+                <circle cx="9" cy="7" r="4"/>
+                <path d="M22 21v-2a4 4 0 0 0-3-3.87"/>
+                <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+              </svg>
+            )}
+            {amenity.icon === 'terrace' && (
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 21h18"/>
+                <path d="M4 21V8a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v13"/>
+                <path d="M15 21V8a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v13"/>
+                <path d="M9 7V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v3"/>
+              </svg>
+            )}
+            {amenity.icon === 'bath' && (
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M9 6 6.5 3.5a1.5 1.5 0 0 0-1-.5C4.683 3 4 3.683 4 4.5V17a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5"/>
+                <line x1="10" x2="8" y1="5" y2="7"/>
+                <line x1="2" x2="22" y1="12" y2="12"/>
+                <line x1="7" x2="7" y1="19" y2="21"/>
+                <line x1="17" x2="17" y1="19" y2="21"/>
+              </svg>
+            )}
+            {amenity.icon === 'view' && (
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/>
+                <circle cx="12" cy="12" r="3"/>
+              </svg>
+            )}
+            {amenity.icon === 'kitchen' && (
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="3" width="18" height="18" rx="2"/>
+                <path d="M9 3v18"/>
+                <path d="M3 9h18"/>
+                <path d="M3 15h18"/>
+              </svg>
+            )}
+          </div>
+          <span class="amenity-label">{amenity.label}</span>
+        </div>
+      ))}
+    </div>
+  </div>
+</section>
+
+
+<section id="gallery" class="gallery-main">
+  <div class="container">
+    <!-- Desktop: Grid view (3 images) -->
+    <div class="gallery-grid desktop-gallery">
+      <a href="/images/pin2.jpg" class="glightbox gallery-item gallery-featured" data-gallery="apartments">
+        <img src="/images/pin2.jpg" alt="Apartment bedroom" />
+        <div class="gallery-overlay">
+          <span class="view-icon">🔍</span>
+        </div>
+      </a>
+
+      <a href="/images/pin3.jpg" class="glightbox gallery-item gallery-featured" data-gallery="apartments">
+        <img src="/images/pin3.jpg" alt="Apartment kitchen" />
+        <div class="gallery-overlay">
+          <span class="view-icon">🔍</span>
+        </div>
+      </a>
+      
+      <a href="/images/pin4.jpg" class="glightbox gallery-item gallery-featured" data-gallery="apartments">
+        <img src="/images/pin4.jpg" alt="Apartment kitchen" />
+        <div class="gallery-overlay">
+          <span class="view-icon">🔍</span>
+        </div>
+      </a>
+    </div>
+
+    <!-- Mobile: Carousel view -->
+    <div class="mobile-carousel">
+      <button class="carousel-btn prev-btn" aria-label="Previous image">‹</button>
+      
+      <div class="carousel-container">
+        <a href="/images/pin2.jpg" class="glightbox carousel-item active" data-gallery="apartments">
+          <img src="/images/pin2.jpg" alt="Apartment bedroom" />
+          <div class="gallery-overlay">
+            <span class="view-icon">🔍</span>
+          </div>
+        </a>
+
+        <a href="/images/pin3.jpg" class="glightbox carousel-item" data-gallery="apartments">
+          <img src="/images/pin3.jpg" alt="Apartment kitchen" />
+          <div class="gallery-overlay">
+            <span class="view-icon">🔍</span>
+          </div>
+        </a>
+        
+        <a href="/images/pin4.jpg" class="glightbox carousel-item" data-gallery="apartments">
+          <img src="/images/pin4.jpg" alt="Apartment detail" />
+          <div class="gallery-overlay">
+            <span class="view-icon">🔍</span>
+          </div>
+        </a>
+        <a href="/images/pin5.jpg" class="glightbox carousel-item" data-gallery="apartments">
+          <img src="/images/pin5.jpg" alt="Apartment detail" />
+          <div class="gallery-overlay">
+            <span class="view-icon">🔍</span>
+          </div>
+        </a>
+        <a href="/images/pin6.jpg" class="glightbox carousel-item" data-gallery="apartments">
+          <img src="/images/pin6.jpg" alt="Apartment detail" />
+          <div class="gallery-overlay">
+            <span class="view-icon">🔍</span>
+          </div>
+        </a>
+        <a href="/images/pin7.jpg" class="glightbox carousel-item" data-gallery="apartments">
+          <img src="/images/pin7.jpg" alt="Apartment detail" />
+          <div class="gallery-overlay">
+            <span class="view-icon">🔍</span>
+          </div>
+        </a>
+        <a href="/images/pin8.jpg" class="glightbox carousel-item" data-gallery="apartments">
+          <img src="/images/pin8.jpg" alt="Apartment detail" />
+          <div class="gallery-overlay">
+            <span class="view-icon">🔍</span>
+          </div>
+        </a>
+        <a href="/images/pin9.jpg" class="glightbox carousel-item" data-gallery="apartments">
+          <img src="/images/pin9.jpg" alt="Apartment detail" />
+          <div class="gallery-overlay">
+            <span class="view-icon">🔍</span>
+          </div>
+        </a>
+        <a href="/images/pin10.jpg" class="glightbox carousel-item" data-gallery="apartments">
+          <img src="/images/pin10.jpg" alt="Apartment detail" />
+          <div class="gallery-overlay">
+            <span class="view-icon">🔍</span>
+          </div>
+        </a>
+        <a href="/images/pin11.jpg" class="glightbox carousel-item" data-gallery="apartments">
+          <img src="/images/pin11.jpg" alt="Apartment detail" />
+          <div class="gallery-overlay">
+            <span class="view-icon">🔍</span>
+          </div>
+        </a>
+        <a href="/images/pin12.jpg" class="glightbox carousel-item" data-gallery="apartments">
+          <img src="/images/pin12.jpg" alt="Apartment detail" />
+          <div class="gallery-overlay">
+            <span class="view-icon">🔍</span>
+          </div>
+        </a>
+        <a href="/images/pin13.jpg" class="glightbox carousel-item" data-gallery="apartments">
+          <img src="/images/pin13.jpg" alt="Apartment detail" />
+          <div class="gallery-overlay">
+            <span class="view-icon">🔍</span>
+          </div>
+        </a>
+        <a href="/images/pin14.jpg" class="glightbox carousel-item" data-gallery="apartments">
+          <img src="/images/pin14.jpg" alt="Apartment detail" />
+          <div class="gallery-overlay">
+            <span class="view-icon">🔍</span>
+          </div>
+        </a>
+        <a href="/images/pin15.jpg" class="glightbox carousel-item" data-gallery="apartments">
+          <img src="/images/pin15.jpg" alt="Apartment detail" />
+          <div class="gallery-overlay">
+            <span class="view-icon">🔍</span>
+          </div>
+        </a>
+        <a href="/images/pin16.jpg" class="glightbox carousel-item" data-gallery="apartments">
+          <img src="/images/pin16.jpg" alt="Apartment detail" />
+          <div class="gallery-overlay">
+            <span class="view-icon">🔍</span>
+          </div>
+        </a>
+        <a href="/images/pin17.jpg" class="glightbox carousel-item" data-gallery="apartments">
+          <img src="/images/pin17.jpg" alt="Apartment detail" />
+          <div class="gallery-overlay">
+            <span class="view-icon">🔍</span>
+          </div>
+        </a>
+        <a href="/images/pin18.jpg" class="glightbox carousel-item" data-gallery="apartments">
+          <img src="/images/pin18.jpg" alt="Apartment detail" />
+          <div class="gallery-overlay">
+            <span class="view-icon">🔍</span>
+          </div>
+        </a>
+        <a href="/images/pin19.jpg" class="glightbox carousel-item" data-gallery="apartments">
+          <img src="/images/pin19.jpg" alt="Apartment detail" />
+          <div class="gallery-overlay">
+            <span class="view-icon">🔍</span>
+          </div>
+        </a>
+        <a href="/images/pin20.jpg" class="glightbox carousel-item" data-gallery="apartments">
+          <img src="/images/pin20.jpg" alt="Apartment detail" />
+          <div class="gallery-overlay">
+            <span class="view-icon">🔍</span>
+          </div>
+        </a>
+        <a href="/images/pin21.jpg" class="glightbox carousel-item" data-gallery="apartments">
+          <img src="/images/pin21.jpg" alt="Apartment detail" />
+          <div class="gallery-overlay">
+            <span class="view-icon">🔍</span>
+          </div>
+        </a>
+        <a href="/images/pin22.jpg" class="glightbox carousel-item" data-gallery="apartments">
+          <img src="/images/pin22.jpg" alt="Apartment detail" />
+          <div class="gallery-overlay">
+            <span class="view-icon">🔍</span>
+          </div>
+        </a>
+        <a href="/images/pin23.jpg" class="glightbox carousel-item" data-gallery="apartments">
+          <img src="/images/pin23.jpg" alt="Apartment detail" />
+          <div class="gallery-overlay">
+            <span class="view-icon">🔍</span>
+          </div>
+        </a>
+        <a href="/images/pin24.jpg" class="glightbox carousel-item" data-gallery="apartments">
+          <img src="/images/pin24.jpg" alt="Apartment detail" />
+          <div class="gallery-overlay">
+            <span class="view-icon">🔍</span>
+          </div>
+        </a>
+        <a href="/images/pin25.jpg" class="glightbox carousel-item" data-gallery="apartments">
+          <img src="/images/pin25.jpg" alt="Apartment detail" />
+          <div class="gallery-overlay">
+            <span class="view-icon">🔍</span>
+          </div>
+        </a>
+        <a href="/images/pin26.jpg" class="glightbox carousel-item" data-gallery="apartments">
+          <img src="/images/pin26.jpg" alt="Apartment detail" />
+          <div class="gallery-overlay">
+            <span class="view-icon">🔍</span>
+          </div>
+        </a>
+        <a href="/images/pin27.jpg" class="glightbox carousel-item" data-gallery="apartments">
+          <img src="/images/pin27.jpg" alt="Apartment detail" />
+          <div class="gallery-overlay">
+            <span class="view-icon">🔍</span>
+          </div>
+        </a>
+        <a href="/images/pin28.jpg" class="glightbox carousel-item" data-gallery="apartments">
+          <img src="/images/pin28.jpg" alt="Apartment detail" />
+          <div class="gallery-overlay">
+            <span class="view-icon">🔍</span>
+          </div>
+        </a>
+      </div>
+      
+      <button class="carousel-btn next-btn" aria-label="Next image">›</button>
+    </div>
+
+     <div class="carousel-counter">
+      <span class="current-slide">1</span> / <span class="total-slides">3</span>
+    </div>
+
+    <!-- Hidden images - only visible in lightbox -->
+    <div style="display: none;">
+      <a href="/images/pin5.jpg" class="glightbox" data-gallery="apartments">
+        <img src="/images/pin5.jpg" alt="Apartment balcony" />
+      </a>
+      <a href="/images/pin6.jpg" class="glightbox" data-gallery="apartments">
+        <img src="/images/pin6.jpg" alt="Apartment view" />
+      </a>
+      <!-- Add all your other hidden images here -->
+    </div>
+
+    
+  </div>
+</section>
+<div class="btn-container">
+<a href="#contact" class="btn-cta">Rezerviši</a>
+</div>
+
+<!-- About Section -->
+<section id="about" class="about-section">
+  <div class="container">
+    <h2>O našim apartmanima</h2>
+    <div class="about-content">
+      <p id="aboutText" class="collapsed">
+        Apartmani Pinkum nalaze se u Velikom Gradištu, u starom i mirnom delu grada, 40 metara od Dunava, 5 minuta laganog hoda od centra i 30 minuta lagane šetnje od Srebrnog jezera.  Svi apartmani su kompletno opremljeni – sadrže posuđe, šporet, frižider, čistu posteljinu i peškire i klima uredjaje (uz doplatu). <br/> <br/> Sastoje se od spavaće sobe, dnevnog boravka sa kuhinjom i kupatila. Besplatan wifi, kao i besplatan parking obezbeđeni su svim našim gostima. Takođe, na raspolaganju je dvorište kao i balkon. Pored svega navedenog, za naše goste obezbedili smo i sledeće pogodnosti: besplatna teretana(koja se nalazi 500m od apartmana); besplatan stoni tenis; mogućnost pozajmljivanja ribolovačke opreme. <br/> <br/> Po želji gostiju, možemo organizovati: semirane, časove samoodbrane, školu boksa, aikidoa, kung fu-ving ču, biciklističke ture i obilazak tvrđava u Golupcu i Ramu, obilazak reke Pek, ili krstarenje Dunavom. Radimo i sa grupama, biciklistima, lovcima i ribolovcima. <br/> <br/> U ponudi se nalaze 3 apartmana. Jedan dvokrevetni i dva četvorokrevetna. Parking za motoriste I bicikliste mogućnost parkiranja u dvorištu.  Nalazimo se u starom delu grada, prodavnice i restorani su najvise 5 minuta hoda udaljene od nas ,30m od Dunava i 1,5km od Srebrnog jezera. 70km od Lepenskog Vira, 50km od Viminacijuma, 18km od Golubacke tvrdjave i mnogo drugih kulturno-istorijskih spomenika je u nasoj blizini...
+Jezik koji se govori:
+bosanski, crnogorski, engleski, hrvatski, srpski
+      </p>
+      <button id="toggleBtn">Prikaži više</button>
+      <div class="features-list">
+  <div class="apartment-card">
+  <div class="apartment-header">
+    <a href="#" class="apartment-title">{apartment.title}</a>
+    
+  </div>
+
+  <div class="apartment-info">
+    <div class="guests-info">
+      <span class="label">Za:</span>
+      <div class="guests-icons">
+        {Array.from({ length: apartment.guests }).map(() => (
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+          </svg>
+        ))}
+      </div>
+    </div>
+
+    <div class="room-info">
+      <div class="room-item">
+        <span class="room-label">Spavaća soba:</span>
+        <span class="room-details">{apartment.bedroom.count} {apartment.bedroom.beds}</span>
+        <svg class="room-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M2 4v16"/>
+          <path d="M2 8h18a2 2 0 0 1 2 2v10"/>
+          <path d="M2 17h20"/>
+          <path d="M6 8V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v4"/>
+        </svg>
+      </div>
+
+      <div class="room-item">
+        <span class="room-label">Dnevna soba:</span>
+        <span class="room-details">{apartment.livingRoom.count} {apartment.livingRoom.furniture}</span>
+        <svg class="room-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M20 9V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v3"/>
+          <path d="M2 11v5a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-5a2 2 0 0 0-4 0v2H6v-2a2 2 0 0 0-4 0Z"/>
+          <path d="M4 18v2"/>
+          <path d="M20 18v2"/>
+        </svg>
+      </div>
+    </div>
+  </div>
+
+  <div class="amenities-list">
+    {apartment.amenities.map((amenity) => (
+      <div class="amenity-item">
+        <div class="amenity-icon-wrapper">
+          {amenity.icon === 'apartment' && (
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+              <polyline points="9 22 9 12 15 12 15 22"/>
+            </svg>
+          )}
+          {amenity.icon === 'size' && (
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v3"/>
+              <path d="M21 16v3a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-3"/>
+              <path d="M4 12H2"/>
+              <path d="M10 12H8"/>
+              <path d="M16 12h-2"/>
+              <path d="M22 12h-2"/>
+            </svg>
+          )}
+          {amenity.icon === 'balcony' && (
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="3" width="18" height="18" rx="2"/>
+              <path d="M9 3v18"/>
+              <path d="M15 3v18"/>
+            </svg>
+          )}
+          {amenity.icon === 'view' && (
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/>
+              <circle cx="12" cy="12" r="3"/>
+            </svg>
+          )}
+          {amenity.icon === 'floor' && (
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="3" width="7" height="7"/>
+              <rect x="14" y="3" width="7" height="7"/>
+              <rect x="14" y="14" width="7" height="7"/>
+              <rect x="3" y="14" width="7" height="7"/>
+            </svg>
+          )}
+          {amenity.icon === 'bath' && (
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M9 6 6.5 3.5a1.5 1.5 0 0 0-1-.5C4.683 3 4 3.683 4 4.5V17a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5"/>
+              <line x1="10" x2="8" y1="5" y2="7"/>
+              <line x1="2" x2="22" y1="12" y2="12"/>
+            </svg>
+          )}
+          {amenity.icon === 'entrance' && (
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M13 4h3a2 2 0 0 1 2 2v14"/>
+              <path d="M2 20h3"/>
+              <path d="M13 20h9"/>
+              <path d="M10 12v.01"/>
+              <path d="M13 4.562v16.157a1 1 0 0 1-1.242.97L5 20V5.562a2 2 0 0 1 1.515-1.94l4-1A2 2 0 0 1 13 4.561Z"/>
+            </svg>
+          )}
+          {amenity.icon === 'fridge' && (
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M5 6a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6Z"/>
+              <path d="M5 10h14"/>
+              <path d="M8 14v4"/>
+              <path d="M8 6v1"/>
+            </svg>
+          )}
+          {amenity.icon === 'cooking' && (
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="3"/>
+              <path d="M12 2v4"/>
+              <path d="M12 18v4"/>
+              <path d="m4.93 4.93 2.83 2.83"/>
+              <path d="m16.24 16.24 2.83 2.83"/>
+              <path d="M2 12h4"/>
+              <path d="M18 12h4"/>
+            </svg>
+          )}
+          {amenity.icon === 'wifi' && (
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M5 12.55a11 11 0 0 1 14.08 0"/>
+              <path d="M1.42 9a16 16 0 0 1 21.16 0"/>
+              <path d="M8.53 16.11a6 6 0 0 1 6.95 0"/>
+              <line x1="12" y1="20" x2="12.01" y2="20"/>
+            </svg>
+          )}
+        </div>
+        <span class="amenity-label">{amenity.label}</span>
+      </div>
+    ))}
+    
+    
+  </div>
+  <div class="apartment-price style-1">
+  <span class="price-amount">45 €</span>
+  <span class="price-label">po noći</span>
+</div>
+</div>
+ <div class="apartment-card">
+  <div class="apartment-header">
+    <a href="#" class="apartment-title">{apartment.title}</a>
+    
+  </div>
+
+  <div class="apartment-info">
+    <div class="guests-info">
+      <span class="label">Za:</span>
+      <div class="guests-icons">
+        {Array.from({ length: apartment2.guests }).map(() => (
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+          </svg>
+        ))}
+      </div>
+    </div>
+
+    <div class="room-info">
+      <div class="room-item">
+        <span class="room-label">Spavaća soba:</span>
+        <span class="room-details">{apartment2.bedroom.count} {apartment.bedroom.beds}</span>
+        <svg class="room-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M2 4v16"/>
+          <path d="M2 8h18a2 2 0 0 1 2 2v10"/>
+          <path d="M2 17h20"/>
+          <path d="M6 8V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v4"/>
+        </svg>
+      </div>
+
+      
+    </div>
+  </div>
+
+  <div class="amenities-list">
+    {apartment.amenities.map((amenity) => (
+      <div class="amenity-item">
+        <div class="amenity-icon-wrapper">
+          {amenity.icon === 'apartment' && (
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+              <polyline points="9 22 9 12 15 12 15 22"/>
+            </svg>
+          )}
+          {amenity.icon === 'size' && (
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v3"/>
+              <path d="M21 16v3a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-3"/>
+              <path d="M4 12H2"/>
+              <path d="M10 12H8"/>
+              <path d="M16 12h-2"/>
+              <path d="M22 12h-2"/>
+            </svg>
+          )}
+          {amenity.icon === 'balcony' && (
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="3" width="18" height="18" rx="2"/>
+              <path d="M9 3v18"/>
+              <path d="M15 3v18"/>
+            </svg>
+          )}
+          {amenity.icon === 'view' && (
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/>
+              <circle cx="12" cy="12" r="3"/>
+            </svg>
+          )}
+          {amenity.icon === 'floor' && (
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="3" width="7" height="7"/>
+              <rect x="14" y="3" width="7" height="7"/>
+              <rect x="14" y="14" width="7" height="7"/>
+              <rect x="3" y="14" width="7" height="7"/>
+            </svg>
+          )}
+          {amenity.icon === 'bath' && (
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M9 6 6.5 3.5a1.5 1.5 0 0 0-1-.5C4.683 3 4 3.683 4 4.5V17a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5"/>
+              <line x1="10" x2="8" y1="5" y2="7"/>
+              <line x1="2" x2="22" y1="12" y2="12"/>
+            </svg>
+          )}
+          {amenity.icon === 'entrance' && (
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M13 4h3a2 2 0 0 1 2 2v14"/>
+              <path d="M2 20h3"/>
+              <path d="M13 20h9"/>
+              <path d="M10 12v.01"/>
+              <path d="M13 4.562v16.157a1 1 0 0 1-1.242.97L5 20V5.562a2 2 0 0 1 1.515-1.94l4-1A2 2 0 0 1 13 4.561Z"/>
+            </svg>
+          )}
+          {amenity.icon === 'fridge' && (
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M5 6a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6Z"/>
+              <path d="M5 10h14"/>
+              <path d="M8 14v4"/>
+              <path d="M8 6v1"/>
+            </svg>
+          )}
+          {amenity.icon === 'cooking' && (
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="3"/>
+              <path d="M12 2v4"/>
+              <path d="M12 18v4"/>
+              <path d="m4.93 4.93 2.83 2.83"/>
+              <path d="m16.24 16.24 2.83 2.83"/>
+              <path d="M2 12h4"/>
+              <path d="M18 12h4"/>
+            </svg>
+          )}
+          {amenity.icon === 'wifi' && (
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M5 12.55a11 11 0 0 1 14.08 0"/>
+              <path d="M1.42 9a16 16 0 0 1 21.16 0"/>
+              <path d="M8.53 16.11a6 6 0 0 1 6.95 0"/>
+              <line x1="12" y1="20" x2="12.01" y2="20"/>
+            </svg>
+          )}
+        </div>
+        <span class="amenity-label">{amenity.label}</span>
+      </div>
+    ))}
+    
+  </div>
+  <div class="apartment-price style-1">
+  <span class="price-amount">35 €</span>
+  <span class="price-label">po noći</span>
+</div>
+</div>
+
+        
+         <div class="apartment-card">
+  <div class="apartment-header">
+    <a href="#" class="apartment-title">{apartment.title}</a>
+    
+  </div>
+
+  <div class="apartment-info">
+    <div class="guests-info">
+      <span class="label">Za:</span>
+      <div class="guests-icons">
+        {Array.from({ length: apartment.guests }).map(() => (
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+          </svg>
+        ))}
+      </div>
+    </div>
+
+    <div class="room-info">
+      <div class="room-item">
+        <span class="room-label">Spavaća soba:</span>
+        <span class="room-details">{apartment.bedroom.count} {apartment.bedroom.beds}</span>
+        <svg class="room-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M2 4v16"/>
+          <path d="M2 8h18a2 2 0 0 1 2 2v10"/>
+          <path d="M2 17h20"/>
+          <path d="M6 8V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v4"/>
+        </svg>
+      </div>
+
+      <div class="room-item">
+        <span class="room-label">Dnevna soba:</span>
+        <span class="room-details">{apartment.livingRoom.count} {apartment.livingRoom.furniture}</span>
+        <svg class="room-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M20 9V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v3"/>
+          <path d="M2 11v5a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-5a2 2 0 0 0-4 0v2H6v-2a2 2 0 0 0-4 0Z"/>
+          <path d="M4 18v2"/>
+          <path d="M20 18v2"/>
+        </svg>
+      </div>
+    </div>
+  </div>
+
+  <div class="amenities-list">
+    {apartment.amenities.map((amenity) => (
+      <div class="amenity-item">
+        <div class="amenity-icon-wrapper">
+          {amenity.icon === 'apartment' && (
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+              <polyline points="9 22 9 12 15 12 15 22"/>
+            </svg>
+          )}
+          {amenity.icon === 'size' && (
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v3"/>
+              <path d="M21 16v3a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-3"/>
+              <path d="M4 12H2"/>
+              <path d="M10 12H8"/>
+              <path d="M16 12h-2"/>
+              <path d="M22 12h-2"/>
+            </svg>
+          )}
+          {amenity.icon === 'balcony' && (
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="3" width="18" height="18" rx="2"/>
+              <path d="M9 3v18"/>
+              <path d="M15 3v18"/>
+            </svg>
+          )}
+          {amenity.icon === 'view' && (
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/>
+              <circle cx="12" cy="12" r="3"/>
+            </svg>
+          )}
+          {amenity.icon === 'floor' && (
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="3" width="7" height="7"/>
+              <rect x="14" y="3" width="7" height="7"/>
+              <rect x="14" y="14" width="7" height="7"/>
+              <rect x="3" y="14" width="7" height="7"/>
+            </svg>
+          )}
+          {amenity.icon === 'bath' && (
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M9 6 6.5 3.5a1.5 1.5 0 0 0-1-.5C4.683 3 4 3.683 4 4.5V17a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5"/>
+              <line x1="10" x2="8" y1="5" y2="7"/>
+              <line x1="2" x2="22" y1="12" y2="12"/>
+            </svg>
+          )}
+          {amenity.icon === 'entrance' && (
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M13 4h3a2 2 0 0 1 2 2v14"/>
+              <path d="M2 20h3"/>
+              <path d="M13 20h9"/>
+              <path d="M10 12v.01"/>
+              <path d="M13 4.562v16.157a1 1 0 0 1-1.242.97L5 20V5.562a2 2 0 0 1 1.515-1.94l4-1A2 2 0 0 1 13 4.561Z"/>
+            </svg>
+          )}
+          {amenity.icon === 'fridge' && (
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M5 6a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6Z"/>
+              <path d="M5 10h14"/>
+              <path d="M8 14v4"/>
+              <path d="M8 6v1"/>
+            </svg>
+          )}
+          {amenity.icon === 'cooking' && (
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="3"/>
+              <path d="M12 2v4"/>
+              <path d="M12 18v4"/>
+              <path d="m4.93 4.93 2.83 2.83"/>
+              <path d="m16.24 16.24 2.83 2.83"/>
+              <path d="M2 12h4"/>
+              <path d="M18 12h4"/>
+            </svg>
+          )}
+          {amenity.icon === 'wifi' && (
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M5 12.55a11 11 0 0 1 14.08 0"/>
+              <path d="M1.42 9a16 16 0 0 1 21.16 0"/>
+              <path d="M8.53 16.11a6 6 0 0 1 6.95 0"/>
+              <line x1="12" y1="20" x2="12.01" y2="20"/>
+            </svg>
+          )}
+        </div>
+        <span class="amenity-label">{amenity.label}</span>
+      </div>
+    ))}
+    
+  </div>
+  <div class="apartment-price style-1">
+  <span class="price-amount">45 €</span>
+  <span class="price-label">po noći</span>
+</div>
+</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="reviews-section">
+  <h2 class="reviews-title">Recenzije</h2>
+
+  <div class="score-block">
+    <div class="overall-badge">{overallScore}</div>
+    <div class="overall-meta">
+      <span class="overall-label">Izuzetan</span>
+      <span class="overall-count">· {totalReviews} recenzija</span>
+    </div>
+  </div>
+
+  <div class="categories-grid">
+    {categories.map((cat) => (
+      <div class="category-item">
+        <div class="category-top">
+          <span class="category-label">{cat.label}</span>
+          <span class="category-score">{cat.score.toFixed(1)}</span>
+        </div>
+        <div class="bar-track">
+          <div
+            class="bar-fill"
+            style={`width: ${(cat.score / 10) * 100}%`}
+          ></div>
+        </div>
+      </div>
+    ))}
+  </div>
+
+  <div class="carousel-wrapper">
+    <button class="nav-btn nav-prev" aria-label="Prethodni">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="15 18 9 12 15 6"></polyline>
+      </svg>
+    </button>
+
+    <div class="carousel-viewport">
+      <div class="carousel-track">
+        {reviews.map((review, i) => (
+          <div class="review-card">
+            <div class="card-header">
+              <div class="avatar" style={`background: hsl(${i * 47 + 200}, 60%, 40%)`}>
+                {review.name.charAt(0)}
+              </div>
+              <div class="reviewer-info">
+                <span class="reviewer-name">{review.name}</span>
+                <span class="reviewer-country">
+                  <img src={review.flag} alt={review.country} class="flag" />
+                  {review.country}
+                </span>
+              </div>
+              
+            </div>
+            <p class="card-text">{review.text}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+
+    <button class="nav-btn nav-next" aria-label="Sledeći">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="9 18 15 12 9 6"></polyline>
+      </svg>
+    </button>
+  </div>
+
+  <div class="dots-container"></div>
+</section>
+
+<section class="destination-section">
+<DestinationCards title="Najbolje na destinaciji: Veliko Gradište" />
+</section> 
+
+
+<!-- Contact Section -->
+<section id="contact" class="contact-section">
+  <div class="container">
+    <h2>Kontakt</h2>
+    <div class="contact-content">
+      <div class="contact-info">
+        <div class="contact-item">
+          <span class="contact-icon">📞</span>
+          <div>
+           
+            <p>
+  <a href="tel:+381658185542">065/818-5542</a>
+</p>
+          </div>
+        </div>
+        <div class="contact-item">
+          <span class="contact-icon">📧</span>
+          <div>
+            
+            <p>apartmanipinkum@proton.me</p>
+          </div>
+        </div>
+        <div class="contact-item">
+          <span class="contact-icon">📍</span>
+          <div>
+            
+            <p>Veliko Gradište, Karadjordjeva 34A</p>
+          </div>
+        </div>
+      </div>
+      <div class="booking-note">
+        <p><strong>Spremni za dolazak?</strong> Kontaktirajte nas!</p>
+      </div>
+    </div>
+  </div>
+</section>
+<div class="map-section">
+<MapLocation
+lat={44.7651714}
+lng={21.5116742}
+label="Karađorđeva 34A 3, 12220 Veliko Gradište"
+zoom={15}
+/>
+</div>
+
+
+<footer>
+  <div class="footer-container">
+    <p>© {currentYear} Apartmani Pinkum Veliko Gradište</p>
+    
+  </div>
+</footer>
+</div>
+
+<style is:global>
+
+  footer {
+    background-color: #1a1a1a;
+    color: #ccc;
+    padding: 2rem 1rem;
+    margin-top: auto;
+    max-width: 1050px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .footer-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+
+  p {
+    margin: 0;
+    font-size: 0.9rem;
+  }
+
+  
+
+  nav a:hover {
+    color: #fff;
+  }
+
+  .map-section {
+    padding: 1rem;
+    width: 100%;
+    max-width: 1100px;
+    text-align: center;
+    margin: 0 auto;
+  }
+
+  .map-card {
+    display: inline-block;
+    text-decoration: none;
+    color: inherit;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    max-width: 400px;
+    width: 100%;
+  }
+
+  .map-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+  }
+
+  .map-preview {
+    position: relative;
+    height: 180px;
+    overflow: hidden;
+    background: #e8e0d8;
+    cursor: pointer;
+  }
+
+  .map-preview iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+    pointer-events: none; /* prevent iframe from capturing clicks */
+  }
+
+  .map-overlay {
+    position: absolute;
+    bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: white;
+    color: #333;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    white-space: nowrap;
+  }
+
+  .map-label {
+    margin: 0;
+    padding: 10px 14px;
+    font-size: 13px;
+    color: #555;
+    background: white;
+    border-top: 1px solid #eee;
+  }
+
+  .pocetna {
+    font-family: 'Playfair Display', serif;
+    color: white;
+    font-weight: 700;
+    
+    
+    
+  }
+
+  .reviews-section {
+    font-family: 'Playfair Display', serif;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 1rem 1.25rem;
+    color: #1a1a2e;
+  }
+
+  .reviews-title {
+    font-size: 1.6rem;
+    font-weight: 700;
+    margin-bottom: 1.25rem;
+    letter-spacing: -0.02em;
+    color: white;
+  }
+
+  /* Score Block */
+  .score-block {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .overall-badge {
+    background: #23120B;
+    color: #fff;
+    font-size: 1.25rem;
+    font-weight: 700;
+    padding: 0.35rem 0.65rem;
+    border-radius: 6px;
+    line-height: 1;
+    font-family: 'Playfair Display', serif;
+  }
+
+  .overall-label {
+    font-weight: 700;
+    font-size: 1rem;
+    color: white;
+  }
+
+  .overall-count {
+    font-size: 0.9rem;
+    color: #555;
+  }
+
+  /* Categories Grid */
+  .categories-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.65rem;
+    margin-bottom: 2rem;
+  }
+
+  @media (min-width: 600px) {
+    .categories-grid {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+
+  .category-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+  }
+
+  .category-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .category-label {
+    font-size: 0.875rem;
+    color: white;
+    font-family: 'Playfair Display', serif;
+  }
+
+  .category-score {
+    font-size: 0.875rem;
+    font-weight: 700;
+    color: white;
+    font-family: 'Playfair Display', serif;
+  }
+
+  .bar-track {
+    height: 6px;
+    background: #e0e4ef;
+    border-radius: 99px;
+    overflow: hidden;
+  }
+
+  .bar-fill {
+    height: 100%;
+    background: #6b352f;
+    border-radius: 99px;
+    transition: width 0.6s ease;
+  }
+
+  /* Carousel */
+  .carousel-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .carousel-viewport {
+    flex: 1;
+    overflow: hidden;
+  }
+
+  .carousel-track {
+    display: flex;
+    gap: 0.875rem;
+    transition: transform 0.38s cubic-bezier(0.4, 0, 0.2, 1);
+    will-change: transform;
+  }
+
+  /* Card sizing: 2 visible on mobile, 3 on desktop */
+  .review-card {
+    flex: 0 0 calc((100%) / 1);
+    min-width: 0;
+    background: #23120B;
+    
+    border-radius: 12px;
+    padding: 2rem 2rem 2.1rem;
+    box-shadow: 0 2px 8px rgba(0, 53, 128, 0.06);
+    transition: box-shadow 0.2s ease, transform 0.2s ease;
+  }
+
+  .review-card:hover {
+    box-shadow: 0 6px 20px rgba(0, 53, 128, 0.12);
+    transform: translateY(-2px);
+  }
+
+  @media (min-width: 768px) {
+    .review-card {
+      flex: 0 0 calc((100% - 1.75rem) / 3);
+      padding: 3rem 2rem 2.1rem;
+      
+    }
+  }
+
+  .card-header {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin-bottom: 0.65rem;
+  }
+
+  .avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #fff;
+    flex-shrink: 0;
+    font-family: 'Playfair Display', serif;
+  }
+
+  .reviewer-info {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+  }
+
+  .reviewer-name {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: white;
+    font-family: 'Playfair Display', serif;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .reviewer-country {
+    font-size: 0.65rem;
+    color: white;
+    font-family: 'Playfair Display', serif;
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+  }
+
+  .flag {
+    font-size: 0.85rem;
+    width: 16px;
+    height: 12px;
+    object-fit: cover;
+    
+  }
+
+  
+
+  .card-text {
+    font-size: 0.9rem;
+    line-height: 1.55;
+    color: white;
+    margin: 0;
+    font-family: 'Playfair Display', serif;
+    display: -webkit-box;
+    -webkit-line-clamp: 4;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  /* Nav Buttons */
+  .nav-btn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 2;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 1.5px solid #dde3f0;
+  background: #fff;
+  color: #003580;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease, opacity 0.2s ease;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+}
+
+.nav-prev {
+  left: -18px; /* half the button width, so it sits on the edge */
+}
+
+.nav-next {
+  right: -18px;
+}
+
+  .nav-btn:hover:not(:disabled) {
+    background: #003580;
+    border-color: #003580;
+    color: #fff;
+  }
+
+  .nav-btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+  }
+
+  /* Dots */
+  .dots-container {
+    display: flex;
+    justify-content: center;
+    gap: 0.4rem;
+    margin-top: 1rem;
+    margin-bottom: 2rem;
+  }
+
+  .dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #c8d0e8;
+    cursor: pointer;
+    transition: background 0.2s ease, transform 0.2s ease;
+    border: none;
+    padding: 0;
+  }
+
+  .dot.active {
+    background: #003580;
+    transform: scale(1.25);
+  }
+
+.apartment-price.style-1 {
+  background: #23120B;
+  color: white;
+  padding: 12px;
+  border-radius: 8px;
+  text-align: center;
+  margin-top: 16px;
+}
+
+.apartment-price.style-1 .price-amount {
+  display: block;
+  font-size: 28px;
+  font-weight: 800;
+}
+
+.apartment-price.style-1 .price-label {
+  font-size: 13px;
+  opacity: 0.9;
+}
+
+.apartment-card {
+    max-width: 400px;
+    padding: 16px;
+    background: white;
+    
+    border-radius: 8px;
+    background: #23120B;
+  }
+
+  .apartment-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 12px;
+  }
+
+  .apartment-title {
+    color: white;
+    font-size: 16px;
+    font-weight: 600;
+    text-decoration: none;
+    flex: 1;
+  }
+
+  .apartment-title:hover {
+    text-decoration: underline;
+  }
+
+  .apartment-icon {
+    flex-shrink: 0;
+    color: #0066cc;
+    margin-left: 8px;
+  }
+
+  .apartment-info {
+    margin-bottom: 16px;
+  }
+
+  .guests-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+
+  .label {
+    font-size: 14px;
+    font-weight: 400;
+    color: white;
+  }
+
+  .guests-icons {
+    display: flex;
+    gap: 0px;
+  }
+
+  .guests-icons svg {
+    color: white;
+  }
+
+  .room-info {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .room-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 14px;
+  }
+
+  .room-label {
+    font-weight: 600;
+    color: white;
+  }
+
+  .room-details {
+    color: white;
+  }
+
+  .room-icon {
+    color: white;
+  }
+
+  .amenities-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .amenity-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 2px 6px;
+    background: #23120B;
+    border: none;
+    
+    box-shadow: inset 0 0 0 0.5px rgba(182, 184, 189, 0.4);
+    border-radius: 4px;
+    font-size: 13px;
+  }
+
+  .amenity-icon-wrapper {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+  }
+
+  .amenity-icon-wrapper svg {
+    color: white;
+  }
+
+  .amenity-label {
+    color: #1f2937;
+  }
+
+.amenities-section {
+    width: 100%;
+    padding: 20px;
+    background: #0C0805;
+  }
+
+  .amenities-container {
+    max-width: 400px;
+    margin: 0 auto;
+  }
+
+  .amenities-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+
+  .amenity-card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px;
+    background: white;
+    border: none;
+    box-shadow: inset 0 0 0 0.5px rgba(182, 184, 189, 0.4);
+    border-radius: 8px;
+    transition: all 0.2s ease;
+    background: #23120B;
+  }
+
+  .amenity-card:hover {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  }
+
+  .amenity-card.full-width {
+    grid-column: span 2;
+  }
+
+  .amenity-icon {
+    flex-shrink: 0;
+    width: 24px;
+    height: 24px;
+    color: white;
+  }
+
+  .amenity-label {
+    font-size: 14px;
+    color: #8B4513;
+    font-weight: 400;
+  }
+
+  /* Hide desktop-only items on mobile */
+  .hide-mobile {
+    display: none;
+  }
+
+  /* Desktop styles */
+  @media (min-width: 768px) {
+    .amenities-section {
+      padding: 20px 20px;
+    }
+
+    .amenities-container {
+      max-width: 1100px;
+    }
+
+    .amenities-grid {
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+    }
+
+    .amenity-card.full-width {
+      grid-column: span 1; /* Remove full-width on desktop */
+    }
+
+    .amenity-card {
+      padding: 16px 10px;
+    }
+
+    .amenity-label {
+      font-size: 15px;
+    }
+
+    /* Show desktop-only items */
+    .hide-mobile {
+      display: flex;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .amenities-section {
+      padding: 16px;
+    }
+    
+    .amenity-card {
+      padding: 14px;
+    }
+    
+    .amenity-label {
+      font-size: 13px;
+    }
+  }
+
+/* Navigation */
+.navbar {
+  background: #0C0805;
+  
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  
+}
+
+.desktop-gallery {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  margin-top: 1rem;
+  
+}
+
+.mobile-carousel,
+.carousel-indicators {
+  display: none;
+}
+
+ .carousel-counter {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 1rem;
+    color: #CAA378;
+    font-size: 1rem;
+    font-weight: 500;
+  }
+
+  .current-slide {
+    font-weight: 700;
+  }
+
+/* Mobile Carousel */
+@media (max-width: 768px) {
+  .desktop-gallery {
+    display: none !important;
+  }
+
+  .mobile-carousel {
+  display: block;
+  position: relative;
+  margin-bottom: 1rem;
+}
+
+  .carousel-container {
+    position: relative;
+    width: 100%;
+    overflow: hidden;
+    border-radius: 12px;
+    aspect-ratio: 3/2;
+  }
+
+  .carousel-item {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    transition: opacity 0.5s ease;
+    display: block;
+  }
+
+  .carousel-item.active {
+    opacity: 1;
+    z-index: 1;
+  }
+
+  .carousel-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+.carousel-btn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(0, 0, 0, 0.6);
+  color: white;
+  border: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  font-size: 1.5rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  transition: background 0.3s ease;
+}
+
+.prev-btn {
+  left: 10px;
+}
+
+.next-btn {
+  right: 10px;
+}
+
+  .carousel-btn:active {
+    background: rgba(0, 0, 0, 0.8);
+  }
+
+  .carousel-indicators {
+    display: flex;
+    justify-content: center;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+  }
+
+  .indicator {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.3);
+    cursor: pointer;
+    transition: background 0.3s ease;
+  }
+
+  .indicator.active {
+    background: #CAA378;
+  }
+}
+
+
+.nav-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.logo {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: white;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.nav-links {
+  display: flex;
+  gap: 2rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.nav-links a {
+  color: white;
+  text-decoration: none;
+  font-weight: 500;
+  transition: opacity 0.3s ease;
+  font-size: 1.05rem;
+}
+
+.nav-links a:hover {
+  opacity: 0.8;
+}
+
+/* Compact Hero */
+.hero-compact {
+  background-image: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), url('/images/pin1.jpg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  padding: 4rem 0;
+  text-align: center;
+  color: white;
+  position: relative;
+  max-width: 1100px;
+  margin: 20px auto 0px;
+  border-radius: 12px;
+}
+
+@media (max-width: 768px) {
+  .hero-compact {
+    border-radius: 0px;
+  }
+}
+ 
+    
+  
+
+.hero-content-compact {
+
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 0rem 2rem;
+}
+
+.hero-compact h1 {
+  text-wrap: pretty;
+  font-size: 2.3rem;
+  margin-bottom: 1rem;
+  font-weight: 700;
+}
+
+.hero-tagline {
+  font-size: 1.2rem;
+  margin-bottom: 1.5rem;
+  opacity: 0.95;
+}
+
+h1 {
+	color: white;
+  text-shadow: 2px 2px 6px rgba(0, 0, 0, 0.6);
+}
+
+.btn-container {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 2rem;
+}
+
+.btn-cta {
+  display: inline-block;
+  background: white;
+  color: black;
+  padding: 0.5rem 3.5rem;
+  border-radius: 20px;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+  
+
+  /* Pulse animation */
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+  }
+  50% {
+    transform: scale(1.02); /* Slightly bigger */
+    box-shadow: 0 6px 20px rgba(0,0,0,0.25);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+  }
+}
+
+@media (max-width: 768px) {
+  .btn-cta {
+    padding: 0.4rem 4.8rem;
+  }
+  .btn-container {
+    margin-bottom: 2.5rem;
+  }
+    
+    
+}
+
+.btn-cta:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+}
+
+/* Main Gallery Section */
+.gallery-main {
+  max-width: 1100px;
+  margin: 0 auto;
+  background: #0C0805;
+}
+
+.gallery-main h2 {
+  text-align: center;
+  color: #CAA378;
+  font-size: 2.5rem;
+  margin-bottom: 2.5rem;
+}
+
+.gallery-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  margin-top: 1rem;
+}
+
+.gallery-featured {
+  grid-column: span 1;
+  grid-row: span 2;
+}
+
+.gallery-item {
+  position: relative;
+  overflow: hidden;
+  border-radius: 12px;
+  cursor: pointer;
+  aspect-ratio: 1;
+  display: block;
+}
+
+.gallery-featured {
+  aspect-ratio: 3/2;
+}
+
+.gallery-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.4s ease;
+}
+
+.gallery-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.gallery-item:hover .gallery-overlay {
+  opacity: 1;
+}
+
+.gallery-item:hover img {
+  transform: scale(1.1);
+}
+
+.view-icon {
+  font-size: 3rem;
+  color: white;
+}
+
+.gallery-note {
+  text-align: center;
+  color: #666;
+  font-style: italic;
+  margin-top: 1rem;
+}
+
+/* About Section */
+.about-section {
+  
+  background: #0C0805;
+}
+
+
+.about-section h2 {
+  text-align: center;
+  color: #CAA378;
+  font-size: 1.7rem;
+  margin-bottom: 2rem;
+  margin-top: 0;
+}
+
+.about-content p {
+  text-align: justify;
+  font-size: 1rem;
+  max-width: 1100px;
+  margin: 0 auto 1rem;
+  padding: 0px 5px;
+  line-height: 1.8;
+  color: #e9e3e3;
+}
+
+.features-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 2rem;
+  margin-top: 4rem;
+}
+
+.feature-box {
+  text-align: center;
+  padding: 2rem;
+  background: #23120B;
+  border-radius: 12px;
+  transition: transform 0.3s ease;
+}
+
+.feature-box:hover {
+  transform: translateY(-5px);
+}
+
+.feature-emoji {
+  font-size: 3rem;
+  display: block;
+  margin-bottom: 1rem;
+}
+
+.feature-box h3 {
+  color: #8B4513;
+  margin-bottom: 0.5rem;
+  font-size: 1.3rem;
+}
+
+.feature-box p {
+  color: #666;
+  margin: 0;
+  font-size: 1rem;
+}
+
+/* Contact Section */
+.contact-section {
+  padding: 1rem 0;
+  max-width: 1055px;
+  margin: 0 auto;
+  border-radius: 8px;
+  background: #23120B;
+  
+  
+}
+
+.contact-section h2 {
+  text-align: center;
+  color: #CAA378;
+  font-size: 2rem;
+  margin-bottom: 2rem;
+}
+
+.contact-content {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.contact-info {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 2rem;
+  margin-bottom: 2rem;
+}
+
+.contact-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  background: #F2F2F2;
+  padding-top: 1.5rem;
+ 
+  padding-bottom: 1.5rem;
+  
+  border-radius: 12px;
+}
+
+@media (min-width: 768px) {
+  .contact-item {
+    
+  }
+}
+  
+
+.contact-icon {
+  margin-left: 0.5rem;
+  font-size: 2rem;
+}
+
+.contact-item strong {
+  display: block;
+  color: #654321;
+  margin-bottom: 0.25rem;
+}
+
+.contact-item p {
+  margin: 0;
+  color: #654321;
+}
+
+.booking-note {
+  text-align: center;
+  /* background: white;  */
+  padding: 1.5rem;
+  border-radius: 12px;
+}
+
+.booking-note p {
+  margin: 0;
+  font-size: 1.1rem;
+  color: white;
+}
+
+/* GLightbox Arrows - FORCE to show on ALL screen sizes */
+.glightbox-container .gnext,
+.glightbox-container .gprev {
+  opacity: 1 !important;
+  display: flex !important;
+  visibility: visible !important;
+  pointer-events: auto !important;
+  z-index: 9999 !important;
+}
+
+@media (max-width: 769px) {
+  .glightbox-container .gnext,
+  .glightbox-container .gprev {
+    display: flex !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .glightbox-container .gnext,
+  .glightbox-container .gprev {
+    width: 50px !important;
+    height: 50px !important;
+    background: rgba(0, 0, 0, 0.7) !important;
+    border-radius: 50% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    position: fixed !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+  }
+  
+  .glightbox-container .gnext {
+    right: 10px !important;
+  }
+  
+  .glightbox-container .gprev {
+    left: 10px !important;
+  }
+
+  .glightbox-container .gnext svg,
+  .glightbox-container .gprev svg {
+    width: 24px !important;
+    height: 24px !important;
+    fill: white !important;
+    display: block !important;
+  }
+
+  /* Mobile responsive */
+  .nav-links {
+    gap: 1rem;
+  }
+  
+  .nav-links a {
+    font-size: 0.9rem;
+  }
+
+  .hero-compact h1 {
+    font-size: 1.8rem;
+  }
+
+  .hero-tagline {
+    font-size: 1rem;
+  }
+
+  .gallery-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .gallery-featured {
+    grid-column: span 1;
+    grid-row: span 1;
+  }
+
+  .contact-info {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (min-width: 769px) {
+  .glightbox-container .gnext,
+  .glightbox-container .gprev {
+    opacity: 0.8 !important;
+    transition: opacity 0.3s ease !important;
+  }
+  
+  .glightbox-container .gnext:hover,
+  .glightbox-container .gprev:hover {
+    opacity: 1 !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .logo {
+    font-size: 1.2rem;
+  }
+  
+  .nav-links {
+    gap: 0.8rem;
+  }
+  
+  .nav-links a {
+    font-size: 0.85rem;
+  }
+
+  .hero-compact h1 {
+    font-size: 1.7rem;
+  }
+}
+</style>
+
+<link
+  rel="stylesheet"
+  href="https://cdn.jsdelivr.net/npm/glightbox/dist/css/glightbox.min.css"
+/>
+
+<script src="https://cdn.jsdelivr.net/npm/glightbox/dist/js/glightbox.min.js"></script>
+
+<script>
+  window.addEventListener("DOMContentLoaded", () => {
+    const lightbox = GLightbox({
+      selector: ".glightbox",
+      loop: true,
+      touchNavigation: true,
+      keyboardNavigation: true,
+      slideEffect: "slide",
+      autoplayVideos: false,
+      moreLength: 0,
+    });
+  });
+</script>
+
+<script>
+  const text = document.getElementById("aboutText");
+  const btn = document.getElementById("toggleBtn");
+
+  btn.addEventListener("click", () => {
+    text.classList.toggle("collapsed");
+    btn.textContent = text.classList.contains("collapsed")
+      ? "Prikaži više"
+      : "Prikaži manje";
+  });
+</script>
+
+<script>
+// Mobile carousel functionality
+document.addEventListener('DOMContentLoaded', () => {
+  const carousel = document.querySelector('.mobile-carousel');
+  if (!carousel) return; // Only run on mobile
+
+  const items = document.querySelectorAll('.carousel-item');
+  const prevBtn = document.querySelector('.prev-btn');
+  const nextBtn = document.querySelector('.next-btn');
+  const currentSlideEl = document.querySelector('.current-slide');
+  const totalSlidesEl = document.querySelector('.total-slides');
+  let currentSlide = 0;
+
+  // Set total slides
+  totalSlidesEl.textContent = items.length;
+
+  function showSlide(index) {
+    // Remove active class from all items
+    items.forEach(item => item.classList.remove('active'));
+
+    // Wrap around if necessary
+    if (index >= items.length) {
+      currentSlide = 0;
+    } else if (index < 0) {
+      currentSlide = items.length - 1;
+    } else {
+      currentSlide = index;
+    }
+
+    // Add active class to current item
+    items[currentSlide].classList.add('active');
+    
+    // Update counter (add 1 because we want 1-based counting for display)
+    currentSlideEl.textContent = currentSlide + 1;
+  }
+
+  // Next button
+  nextBtn.addEventListener('click', () => {
+    showSlide(currentSlide + 1);
+  });
+
+  // Previous button
+  prevBtn.addEventListener('click', () => {
+    showSlide(currentSlide - 1);
+  });
+
+  // Optional: Auto-advance carousel every 5 seconds
+  // setInterval(() => {
+  //   showSlide(currentSlide + 1);
+  // }, 5000);
+
+  // Optional: Swipe support
+  let touchStartX = 0;
+  let touchEndX = 0;
+
+  const carouselContainer = document.querySelector('.carousel-container');
+
+  carouselContainer.addEventListener('touchstart', (e) => {
+    touchStartX = e.changedTouches[0].screenX;
+  });
+
+  carouselContainer.addEventListener('touchend', (e) => {
+    touchEndX = e.changedTouches[0].screenX;
+    handleSwipe();
+  });
+
+  function handleSwipe() {
+    if (touchEndX < touchStartX - 50) {
+      // Swipe left - next
+      showSlide(currentSlide + 1);
+    }
+    if (touchEndX > touchStartX + 50) {
+      // Swipe right - previous
+      showSlide(currentSlide - 1);
+    }
+  }
+});
+</script>
+
+<!-- recenzije -->
+
+<script>
+  function initCarousel() {
+    const track = document.querySelector(".carousel-track") as HTMLElement;
+    const viewport = document.querySelector(".carousel-viewport") as HTMLElement;
+    const prevBtn = document.querySelector(".nav-prev") as HTMLButtonElement;
+    const nextBtn = document.querySelector(".nav-next") as HTMLButtonElement;
+    const dotsContainer = document.querySelector(".dots-container") as HTMLElement;
+
+    if (!track || !viewport || !prevBtn || !nextBtn) return;
+
+    let currentIndex = 0;
+
+    function getVisible(): number {
+      return window.innerWidth >= 768 ? 3 : 2;
+    }
+
+    function getCards(): NodeListOf<HTMLElement> {
+      return track.querySelectorAll(".review-card");
+    }
+
+    function getTotalSlides(): number {
+      const cards = getCards();
+      const visible = getVisible();
+      return Math.max(0, cards.length - visible + 1);
+    }
+
+    function buildDots() {
+      dotsContainer.innerHTML = "";
+      const total = getTotalSlides();
+      for (let i = 0; i < total; i++) {
+        const dot = document.createElement("button");
+        dot.className = "dot" + (i === currentIndex ? " active" : "");
+        dot.setAttribute("aria-label", `Slajd ${i + 1}`);
+        dot.addEventListener("click", () => goTo(i));
+        dotsContainer.appendChild(dot);
+      }
+    }
+
+    function updateDots() {
+      dotsContainer.querySelectorAll(".dot").forEach((dot, i) => {
+        dot.classList.toggle("active", i === currentIndex);
+      });
+    }
+
+    function getCardWidth(): number {
+      const cards = getCards();
+      if (!cards.length) return 0;
+      const card = cards[0] as HTMLElement;
+      const gap = parseFloat(getComputedStyle(track).gap) || 14;
+      return card.offsetWidth + gap;
+    }
+
+    function goTo(index: number) {
+      const total = getTotalSlides();
+      currentIndex = Math.max(0, Math.min(index, total - 1));
+      const offset = currentIndex * getCardWidth();
+      track.style.transform = `translateX(-${offset}px)`;
+      prevBtn.disabled = currentIndex === 0;
+      nextBtn.disabled = currentIndex >= total - 1;
+      updateDots();
+    }
+
+    prevBtn.addEventListener("click", () => goTo(currentIndex - 1));
+    nextBtn.addEventListener("click", () => goTo(currentIndex + 1));
+
+    // Touch / swipe support
+    let touchStartX = 0;
+    let touchStartY = 0;
+    let isDragging = false;
+
+    viewport.addEventListener("touchstart", (e) => {
+      touchStartX = e.touches[0].clientX;
+      touchStartY = e.touches[0].clientY;
+      isDragging = true;
+    }, { passive: true });
+
+    viewport.addEventListener("touchend", (e) => {
+      if (!isDragging) return;
+      const dx = e.changedTouches[0].clientX - touchStartX;
+      const dy = e.changedTouches[0].clientY - touchStartY;
+      if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 40) {
+        if (dx < 0) goTo(currentIndex + 1);
+        else goTo(currentIndex - 1);
+      }
+      isDragging = false;
+    }, { passive: true });
+
+    // Init
+    buildDots();
+    goTo(0);
+
+    // Rebuild on resize
+    let resizeTimer: ReturnType<typeof setTimeout>;
+    window.addEventListener("resize", () => {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(() => {
+        const total = getTotalSlides();
+        currentIndex = Math.min(currentIndex, total - 1);
+        buildDots();
+        goTo(currentIndex);
+      }, 120);
+    });
+  }
+
+  // Run after DOM ready
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initCarousel);
+  } else {
+    initCarousel();
+  }
+</script>
+
+
+</BaseLayout>
